@@ -1,114 +1,201 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Click on Georgian Region to Zoom</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <style>
-    body { margin:0; padding:0; }
-    #map { position:absolute; top:0; bottom:0; width:100%; }
-  </style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-  mapboxgl.accessToken = 'pk.eyJ1IjoidmFzbzk5MSIsImEiOiJjbHNkZmNjbXUwdWp1MmlvNmQ0ZXZqcnZjIn0.Yl3gjtnxrbzmJqEf2cUxmg';
-
-  const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/light-v11',
-    center: [44.8, 42.0], // center Georgia
-    zoom: 6
-  });
-
-  map.on('load', () => {
-    // Add GeoJSON with Georgian regions (example file path)
-    map.addSource('georgia-regions', {
-      type: 'geojson',
-      data: 'georgia_regions.geojson'  // <-- replace with your dataset URL or inline GeoJSON
-    });
-
-    // Fill for regions
-    map.addLayer({
-      id: 'region-fills',
-      type: 'fill',
-      source: 'georgia-regions',
-      paint: {
-        'fill-color': '#627BC1',
-        'fill-opacity': 0.4
+  <head>
+    <meta charset="utf-8" />
+    <title>Click on Georgian Region to Zoom</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
       }
-    });
-
-    // Borders for regions
-    map.addLayer({
-      id: 'region-borders',
-      type: 'line',
-      source: 'georgia-regions',
-      paint: {
-        'line-color': '#000',
-        'line-width': 1.5
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
       }
-    });
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoidmFzbzk5MSIsImEiOiJjbHNkZmNjbXUwdWp1MmlvNmQ0ZXZqcnZjIn0.Yl3gjtnxrbzmJqEf2cUxmg";
 
-    map.addLayer({
-      id: 'region-labels',
-      type: 'symbol',
-      source: 'georgia-regions',
-      layout: {
-        'text-field': ['get', 'shapeName'],   // assumes property is "name"
-        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-        'text-size': 14
-      },
-      paint: {
-        'text-color': '#111',
-        'text-halo-color': '#fff',
-        'text-halo-width': 2
-      }
-    });
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/light-v11",
+        center: [44.8, 42.0], // center Georgia
+        zoom: 6,
+      });
 
-    map.on('zoom', () => {
-      const zoom = map.getZoom();
-
-      if (zoom > 8) {
-        // hide labels when zoomed in close
-        map.setLayoutProperty('region-labels', 'visibility', 'none');
-        map.setLayoutProperty('region-fills', 'visibility', 'none');
-        map.setLayoutProperty('region-borders', 'visibility', 'none');
-      } else {
-        // show labels when zoomed out
-        map.setLayoutProperty('region-labels', 'visibility', 'visible');
-        map.setLayoutProperty('region-fills', 'visibility', 'visible');
-        map.setLayoutProperty('region-borders', 'visibility', 'visible');
-      }
-    });
-
-    // On click, zoom to the region
-    map.on('click', 'region-fills', (e) => {
-      if (e.features.length > 0) {
-        const feature = e.features[0];
-
-        // bbox is [minX, minY, maxX, maxY]
-        const [minX, minY, maxX, maxY] = turf.bbox(feature);
-
-        map.fitBounds([[minX, minY], [maxX, maxY]], {
-            padding: 40,
-            duration: 1000
+      map.on("load", () => {
+        // Add GeoJSON with Georgian regions (example file path)
+        map.addSource("georgia-regions", {
+          type: "geojson",
+          data: "georgia_regions.geojson", // <-- replace with your dataset URL or inline GeoJSON
         });
-      }
-    });
 
-    // Change cursor on hover
-    map.on('mouseenter', 'region-fills', () => {
-      map.getCanvas().style.cursor = 'pointer';
-    });
-    map.on('mouseleave', 'region-fills', () => {
-      map.getCanvas().style.cursor = '';
-    });
-  });
-</script>
-<!-- Turf.js for bbox -->
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-</body>
+        // Fill for regions
+        map.addLayer({
+          id: "region-fills",
+          type: "fill",
+          source: "georgia-regions",
+          paint: {
+            "fill-color": "#627BC1",
+            "fill-opacity": 0.4,
+          },
+        });
+
+        // Borders for regions
+        map.addLayer({
+          id: "region-borders",
+          type: "line",
+          source: "georgia-regions",
+          paint: {
+            "line-color": "#000",
+            "line-width": 1.5,
+          },
+        });
+
+        map.addLayer({
+          id: "region-labels",
+          type: "symbol",
+          source: "georgia-regions",
+          layout: {
+            "text-field": ["get", "shapeName"], // assumes property is "name"
+            "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+            "text-size": 14,
+          },
+          paint: {
+            "text-color": "#111",
+            "text-halo-color": "#fff",
+            "text-halo-width": 2,
+          },
+        });
+
+        map.addSource("georgia-munis", {
+          type: "geojson",
+          data: "georgia_municipalities.geojson", // ADM2 dataset
+        });
+
+        map.addLayer({
+          id: "muni-fills",
+          type: "fill",
+          source: "georgia-munis",
+          paint: {
+            "fill-color": "#627BC1",
+            "fill-opacity": 0.4,
+          },
+          minzoom: 7, // only show municipalities when zoomed in
+        });
+
+        map.addLayer({
+          id: "muni-borders",
+          type: "line",
+          source: "georgia-munis",
+          paint: {
+            "line-color": "#000",
+            "line-width": 1.5,
+          },
+          minzoom: 7,
+        });
+
+        map.addLayer({
+          id: "muni-labels",
+          type: "symbol",
+          source: "georgia-munis",
+          layout: {
+            "text-field": ["get", "shapeName"],
+            "text-size": 12,
+          },
+          paint: {
+            "text-color": "#111",
+            "text-halo-color": "#fff",
+            "text-halo-width": 2,
+          },
+          minzoom: 7, // show labels only when zoomed in
+        });
+
+        map.on("zoom", () => {
+          const zoom = map.getZoom();
+
+          if (zoom > 8) {
+            // hide labels when zoomed in close
+            map.setLayoutProperty("region-labels", "visibility", "none");
+            map.setLayoutProperty("region-fills", "visibility", "none");
+            map.setLayoutProperty("region-borders", "visibility", "none");
+            map.setLayoutProperty("muni-labels", "visibility", "visible");
+            map.setLayoutProperty("muni-fills", "visibility", "visible");
+            map.setLayoutProperty("muni-borders", "visibility", "visible");
+          } else {
+            // show labels when zoomed out
+            map.setLayoutProperty("region-labels", "visibility", "visible");
+            map.setLayoutProperty("region-fills", "visibility", "visible");
+            map.setLayoutProperty("region-borders", "visibility", "visible");
+            map.setLayoutProperty("muni-labels", "visibility", "none");
+            map.setLayoutProperty("muni-fills", "visibility", "none");
+            map.setLayoutProperty("muni-borders", "visibility", "none");
+          }
+        });
+
+        // On click, zoom to the region
+        map.on("click", "region-fills", (e) => {
+          if (e.features.length > 0) {
+            const feature = e.features[0];
+
+            // bbox is [minX, minY, maxX, maxY]
+            const [minX, minY, maxX, maxY] = turf.bbox(feature);
+
+            map.fitBounds(
+              [
+                [minX, minY],
+                [maxX, maxY],
+              ],
+              {
+                padding: 40,
+                duration: 1000,
+              }
+            );
+          }
+        });
+
+        map.on("click", "muni-fills", (e) => {
+          if (e.features.length > 0) {
+            const feature = e.features[0];
+
+            // bbox is [minX, minY, maxX, maxY]
+            const [minX, minY, maxX, maxY] = turf.bbox(feature);
+
+            map.fitBounds(
+              [
+                [minX, minY],
+                [maxX, maxY],
+              ],
+              {
+                padding: 40,
+                duration: 1000,
+              }
+            );
+          }
+        });
+
+        // Change cursor on hover
+        map.on("mouseenter", "region-fills", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "region-fills", () => {
+          map.getCanvas().style.cursor = "";
+        });
+      });
+    </script>
+    <!-- Turf.js for bbox -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  </body>
 </html>
