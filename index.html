@@ -5,63 +5,77 @@
     <title>Click on Georgian Region to Zoom</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <link
-      href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
-      rel="stylesheet"
-    />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
     <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
-      #map {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 100%;
-      }
+      body { margin: 0; padding: 0; }
+      #map { position: absolute; inset: 0; }
     </style>
   </head>
   <body>
     <div id="map"></div>
     <script>
-      mapboxgl.accessToken =
-        "pk.eyJ1IjoidmFzbzk5MSIsImEiOiJjbHNkZmNjbXUwdWp1MmlvNmQ0ZXZqcnZjIn0.Yl3gjtnxrbzmJqEf2cUxmg";
+      mapboxgl.accessToken = "pk.eyJ1IjoidmFzbzk5MSIsImEiOiJjbHNkZmNjbXUwdWp1MmlvNmQ0ZXZqcnZjIn0.Yl3gjtnxrbzmJqEf2cUxmg";
 
       const map = new mapboxgl.Map({
         container: "map",
         style: "mapbox://styles/mapbox/light-v11",
-        center: [44.8, 42.0], // center Georgia
+        center: [44.8, 42.0],
         zoom: 6,
       });
 
       map.on("load", () => {
-        // Add GeoJSON with Georgian regions (example file path)
+        // === Sources (enable automatic feature ids for feature-state) ===
         map.addSource("georgia-regions", {
           type: "geojson",
-          data: "georgia_regions.geojson", // <-- replace with your dataset URL or inline GeoJSON
+          data: "georgia_regions.geojson",
+          generateId: true
+        });
+        map.addSource("georgia-munis", {
+          type: "geojson",
+          data: "georgia_municipalities.geojson",
+          generateId: true
         });
 
-        // Fill for regions
+        // === Region layers ===
         map.addLayer({
           id: "region-fills",
           type: "fill",
           source: "georgia-regions",
           paint: {
-            "fill-color": "#627BC1",
-            "fill-opacity": 0.4,
+            // Smooth transition when feature-state "hover" toggles
+            "fill-color": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], "#FF9F43", // hover color
+              "#627BC1" // base color
+            ],
+            "fill-opacity": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], 0.75,
+              0.4
+            ],
+            "fill-color-transition": { duration: 200 },
+            "fill-opacity-transition": { duration: 200 }
           },
           maxzoom: 8,
         });
 
-        // Borders for regions
         map.addLayer({
           id: "region-borders",
           type: "line",
           source: "georgia-regions",
           paint: {
-            "line-color": "#000",
-            "line-width": 1.5,
+            "line-color": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], "#FF9F43",
+              "#000"
+            ],
+            "line-width": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], 2.5,
+              1.5
+            ],
+            "line-color-transition": { duration: 200 },
+            "line-width-transition": { duration: 200 }
           },
           maxzoom: 8,
         });
@@ -71,7 +85,7 @@
           type: "symbol",
           source: "georgia-regions",
           layout: {
-            "text-field": ["get", "shapeName"], // assumes property is "name"
+            "text-field": ["get", "shapeName"],
             "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
             "text-size": 14,
           },
@@ -83,21 +97,27 @@
           maxzoom: 8,
         });
 
-        map.addSource("georgia-munis", {
-          type: "geojson",
-          data: "georgia_municipalities.geojson", // ADM2 dataset
-        });
-
+        // === Municipality layers ===
         map.addLayer({
           id: "muni-fills",
           type: "fill",
           source: "georgia-munis",
           paint: {
-            "fill-color": "#627BC1",
-            "fill-opacity": 0.4,
+            "fill-color": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], "#36B37E",
+              "#627BC1"
+            ],
+            "fill-opacity": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], 0.7,
+              0.4
+            ],
+            "fill-color-transition": { duration: 200 },
+            "fill-opacity-transition": { duration: 200 }
           },
           minzoom: 8,
-          maxzoom: 9,
+          maxzoom: 10,
         });
 
         map.addLayer({
@@ -105,11 +125,21 @@
           type: "line",
           source: "georgia-munis",
           paint: {
-            "line-color": "#000",
-            "line-width": 1.5,
+            "line-color": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], "#36B37E",
+              "#000"
+            ],
+            "line-width": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false], 2.2,
+              1.5
+            ],
+            "line-color-transition": { duration: 200 },
+            "line-width-transition": { duration: 200 }
           },
           minzoom: 8,
-          maxzoom: 9,
+          maxzoom: 10,
         });
 
         map.addLayer({
@@ -126,80 +156,75 @@
             "text-halo-width": 2,
           },
           minzoom: 8,
-          maxzoom: 9,
+          maxzoom: 10,
         });
 
-        // map.on("zoom", () => {
-        //   const zoom = map.getZoom();
-        //   console.log(zoom);
+        // === Zoom on click (regions & munis) ===
+        function fitToFeature(feature) {
+          const [minX, minY, maxX, maxY] = turf.bbox(feature);
+          map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 40, duration: 1000 });
+        }
 
-        //   if (zoom > 9) {
-        //     map.setLayoutProperty("muni-labels", "visibility", "none");
-        //     map.setLayoutProperty("muni-fills", "visibility", "none");
-        //     map.setLayoutProperty("muni-borders", "visibility", "none");
-        //   }
-
-        //   if (zoom > 8) {
-        //     // hide labels when zoomed in close
-        //     map.setLayoutProperty("region-labels", "visibility", "none");
-        //     map.setLayoutProperty("region-fills", "visibility", "none");
-        //     map.setLayoutProperty("region-borders", "visibility", "none");
-        //   } else {
-        //     // show labels when zoomed out
-        //     map.setLayoutProperty("region-labels", "visibility", "visible");
-        //     map.setLayoutProperty("region-fills", "visibility", "visible");
-        //     map.setLayoutProperty("region-borders", "visibility", "visible");
-        //   }
-        // });
-
-        // On click, zoom to the region
         map.on("click", "region-fills", (e) => {
-          if (e.features.length > 0) {
-            const feature = e.features[0];
-
-            // bbox is [minX, minY, maxX, maxY]
-            const [minX, minY, maxX, maxY] = turf.bbox(feature);
-
-            map.fitBounds(
-              [
-                [minX, minY],
-                [maxX, maxY],
-              ],
-              {
-                padding: 40,
-                duration: 1000,
-              }
-            );
-          }
+          if (e.features.length) fitToFeature(e.features[0]);
         });
-
         map.on("click", "muni-fills", (e) => {
-          if (e.features.length > 0) {
-            const feature = e.features[0];
-
-            // bbox is [minX, minY, maxX, maxY]
-            const [minX, minY, maxX, maxY] = turf.bbox(feature);
-
-            map.fitBounds(
-              [
-                [minX, minY],
-                [maxX, maxY],
-              ],
-              {
-                padding: 40,
-                duration: 1000,
-              }
-            );
-          }
+          if (e.features.length) fitToFeature(e.features[0]);
         });
 
-        // Change cursor on hover
-        map.on("mouseenter", "region-fills", () => {
-          map.getCanvas().style.cursor = "pointer";
+        // === Cursor & tooltip ===
+        const popup = new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 12,
+          className: "hover-tooltip"
         });
-        map.on("mouseleave", "region-fills", () => {
-          map.getCanvas().style.cursor = "";
-        });
+
+        function attachHover(layerId) {
+          let hoveredId = null;
+
+          // pointer cursor
+          map.on("mouseenter", layerId, () => {
+            map.getCanvas().style.cursor = "pointer";
+          });
+          map.on("mouseleave", layerId, () => {
+            map.getCanvas().style.cursor = "";
+          });
+
+          // hover state + tooltip
+          map.on("mousemove", layerId, (e) => {
+            const f = e.features && e.features[0];
+            if (!f) return;
+
+            // update feature-state hover
+            if (hoveredId !== null && hoveredId !== f.id) {
+              map.setFeatureState({ source: map.getLayer(layerId).source, id: hoveredId }, { hover: false });
+            }
+            hoveredId = f.id;
+            map.setFeatureState({ source: map.getLayer(layerId).source, id: hoveredId }, { hover: true });
+
+            // tooltip content (feel free to add more props)
+            const name = f.properties?.shapeName || "Unnamed";
+            popup
+              .setLngLat(e.lngLat)
+              .setHTML(`<div style="font: 600 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial;">
+                          ${name}
+                        </div>`)
+              .addTo(map);
+          });
+
+          map.on("mouseleave", layerId, () => {
+            // clear hover state
+            if (hoveredId !== null) {
+              map.setFeatureState({ source: map.getLayer(layerId).source, id: hoveredId }, { hover: false });
+            }
+            hoveredId = null;
+            popup.remove();
+          });
+        }
+
+        attachHover("region-fills");
+        attachHover("muni-fills");
       });
     </script>
     <!-- Turf.js for bbox -->
