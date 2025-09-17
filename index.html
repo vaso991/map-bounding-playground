@@ -53,20 +53,36 @@
     });
 
     map.addLayer({
-    id: 'region-labels',
-    type: 'symbol',
-    source: 'georgia-regions',
-    layout: {
-      'text-field': ['get', 'shapeName'],   // assumes property is "name"
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': 14
-    },
-    paint: {
-      'text-color': '#111',
-      'text-halo-color': '#fff',
-      'text-halo-width': 2
-    }
-  });
+      id: 'region-labels',
+      type: 'symbol',
+      source: 'georgia-regions',
+      layout: {
+        'text-field': ['get', 'shapeName'],   // assumes property is "name"
+        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+        'text-size': 14
+      },
+      paint: {
+        'text-color': '#111',
+        'text-halo-color': '#fff',
+        'text-halo-width': 2
+      }
+    });
+
+    map.on('zoom', () => {
+      const zoom = map.getZoom();
+
+      if (zoom > 8) {
+        // hide labels when zoomed in close
+        map.setLayoutProperty('region-labels', 'visibility', 'none');
+        map.setLayoutProperty('region-fills', 'visibility', 'none');
+        map.setLayoutProperty('region-borders', 'visibility', 'none');
+      } else {
+        // show labels when zoomed out
+        map.setLayoutProperty('region-labels', 'visibility', 'visible');
+        map.setLayoutProperty('region-fills', 'visibility', 'visible');
+        map.setLayoutProperty('region-borders', 'visibility', 'visible');
+      }
+    });
 
     // On click, zoom to the region
     map.on('click', 'region-fills', (e) => {
