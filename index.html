@@ -51,6 +51,7 @@
             "fill-color": "#627BC1",
             "fill-opacity": 0.4,
           },
+          maxzoom: 8,
         });
 
         // Borders for regions
@@ -62,6 +63,7 @@
             "line-color": "#000",
             "line-width": 1.5,
           },
+          maxzoom: 8,
         });
 
         map.addLayer({
@@ -78,6 +80,7 @@
             "text-halo-color": "#fff",
             "text-halo-width": 2,
           },
+          maxzoom: 8,
         });
 
         map.addSource("georgia-munis", {
@@ -93,7 +96,8 @@
             "fill-color": "#627BC1",
             "fill-opacity": 0.4,
           },
-          minzoom: 7, // only show municipalities when zoomed in
+          minzoom: 8,
+          maxzoom: 9,
         });
 
         map.addLayer({
@@ -104,7 +108,8 @@
             "line-color": "#000",
             "line-width": 1.5,
           },
-          minzoom: 7,
+          minzoom: 8,
+          maxzoom: 9,
         });
 
         map.addLayer({
@@ -120,30 +125,32 @@
             "text-halo-color": "#fff",
             "text-halo-width": 2,
           },
-          minzoom: 7, // show labels only when zoomed in
+          minzoom: 8,
+          maxzoom: 9,
         });
 
-        map.on("zoom", () => {
-          const zoom = map.getZoom();
+        // map.on("zoom", () => {
+        //   const zoom = map.getZoom();
+        //   console.log(zoom);
 
-          if (zoom > 8) {
-            // hide labels when zoomed in close
-            map.setLayoutProperty("region-labels", "visibility", "none");
-            map.setLayoutProperty("region-fills", "visibility", "none");
-            map.setLayoutProperty("region-borders", "visibility", "none");
-            map.setLayoutProperty("muni-labels", "visibility", "visible");
-            map.setLayoutProperty("muni-fills", "visibility", "visible");
-            map.setLayoutProperty("muni-borders", "visibility", "visible");
-          } else {
-            // show labels when zoomed out
-            map.setLayoutProperty("region-labels", "visibility", "visible");
-            map.setLayoutProperty("region-fills", "visibility", "visible");
-            map.setLayoutProperty("region-borders", "visibility", "visible");
-            map.setLayoutProperty("muni-labels", "visibility", "none");
-            map.setLayoutProperty("muni-fills", "visibility", "none");
-            map.setLayoutProperty("muni-borders", "visibility", "none");
-          }
-        });
+        //   if (zoom > 9) {
+        //     map.setLayoutProperty("muni-labels", "visibility", "none");
+        //     map.setLayoutProperty("muni-fills", "visibility", "none");
+        //     map.setLayoutProperty("muni-borders", "visibility", "none");
+        //   }
+
+        //   if (zoom > 8) {
+        //     // hide labels when zoomed in close
+        //     map.setLayoutProperty("region-labels", "visibility", "none");
+        //     map.setLayoutProperty("region-fills", "visibility", "none");
+        //     map.setLayoutProperty("region-borders", "visibility", "none");
+        //   } else {
+        //     // show labels when zoomed out
+        //     map.setLayoutProperty("region-labels", "visibility", "visible");
+        //     map.setLayoutProperty("region-fills", "visibility", "visible");
+        //     map.setLayoutProperty("region-borders", "visibility", "visible");
+        //   }
+        // });
 
         // On click, zoom to the region
         map.on("click", "region-fills", (e) => {
